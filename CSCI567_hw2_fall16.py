@@ -154,7 +154,41 @@ for regLambda in regLambdas:
     loss = mean_squared_loss(linear_test_x,linear_test_y,test_n,weights)
     print 'MSE for test data: ' + str(loss)
 
+#Cross validation for Ridge Regression
+print '\nCross Validation results '
+regLambdas = [0.0001,0.001,0.01,0.1,1,10]
+lossArray = np.array(np.zeros(len(regLambdas)))
+k =int(n/10) #No. of samples in a single fold
+index = 0
+for regLambda in regLambdas:
+    loss = 0
+    for i in range(0,10):
+        if i == 0:
+            test_samples_x = linear_train_x[:(i+1)*k,:]
+            test_samples_y = linear_train_y[:(i+1)*k]
+            train_samples_x = linear_train_x[(i+1)*k:,:]
+            train_samples_y = linear_train_y[(i+1)*k:]
+        elif i == 9:
+            test_samples_x = linear_train_x[i*k:,:]
+            test_samples_y = linear_train_y[i*k:]
+            train_samples_x = linear_train_x[:i*k,:]
+            train_samples_y = linear_train_y[:i*k]
+        else:
+            test_samples_x = linear_train_x[i*k:(i+1)*k,:]
+            test_samples_y = linear_train_y[i*k:(i+1)*k]
+            train_samples_x = np.concatenate((linear_train_x[:i*k,:],linear_train_x[(i+1)*k:,:]),axis=0)
+            train_samples_y = np.concatenate((linear_train_y[:i*k],linear_train_y[(i+1)*k:]),axis=0)
 
+        weights = get_ridge_regression_weights(train_samples_x,train_samples_y,regLambda)
+        loss = loss + mean_squared_loss(test_samples_x,test_samples_y,np.size(test_samples_x,0),weights)
 
+    loss  = loss/10
+    lossArray[index] = loss
+    index = index + 1
+    print 'Lambda = ' + str(regLambda) + ', Average MSE over 10 folds = ' + str(loss)
 
+index = np.argmin(lossArray)  #index of the lambda with min average MSE
 
+weights = get_ridge_regression_weights(linear_train_x,linear_train_y,regLambdas[index])
+loss = mean_squared_loss(linear_test_x,linear_test_y,test_n,weights)
+print 'MSE for test data with lambda='+ str(regLambdas[index])+ ' is : ' + str(loss)

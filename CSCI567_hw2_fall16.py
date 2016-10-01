@@ -2,6 +2,8 @@
 from sklearn.datasets import load_boston
 import matplotlib.pyplot as plt
 import numpy as np
+import heapq
+import operator
 
 #-----------------------------------------Function Definition -----------------------------------------------
 
@@ -51,6 +53,14 @@ def get_ridge_regression_weights(x,y,regLambda):
 
     return  a4
 
+def getMaxCorrelatedFeature(x,listFeatures,target):
+    dict = {}
+    for feature in listFeatures:
+        dict[feature] = np.absolute(np.corrcoef(x[:,feature],target)[0][1])
+
+    maxindex = max(dict.iteritems(), key=operator.itemgetter(1))[0]
+    return maxindex
+
 
 #---------------------------------------------- 3.1 Dataset ---------------------------------------------------
 # Loading the Dataset
@@ -90,18 +100,17 @@ for i in range(0,len(boston['data'])):
 
 
 #Pearson Correlation Coefficient
-pcc = []
+pcc = np.array(np.zeros(np.size(train_x,1)))
 yi = train_y[:,0]
 sum_yi = np.sum(yi)
 sum_yi_square = np.sum(np.square(yi))
-
 
 for i in range(0,np.size(train_x,1)):
     xi = train_x[:,i]
     sum_xi = np.sum(xi)
     sum_xi_square = np.sum(np.square(xi))
     sum_xiyi = np.sum(xi*yi)
-    pcc.append((n*sum_xiyi - sum_xi*sum_yi)/(np.sqrt(n*sum_xi_square - np.square(sum_xi)) * np.sqrt(n*sum_yi_square - np.square(sum_yi))))
+    pcc[i]  = ((n*sum_xiyi - sum_xi*sum_yi)/(np.sqrt(n*sum_xi_square - np.square(sum_xi)) * np.sqrt(n*sum_yi_square - np.square(sum_yi))))
 
 print "Pearson Correlation Coefficients are as follows:"
 for i in range(0,len(pcc)):
@@ -192,3 +201,48 @@ index = np.argmin(lossArray)  #index of the lambda with min average MSE
 weights = get_ridge_regression_weights(linear_train_x,linear_train_y,regLambdas[index])
 loss = mean_squared_loss(linear_test_x,linear_test_y,test_n,weights)
 print 'MSE for test data with lambda='+ str(regLambdas[index])+ ' is : ' + str(loss)
+
+
+#--------------------------------------3.3 Feature Selection ------------------------------------------
+
+#3.3 a)
+#At this point we have pcc which is the calculated pearson correlation array for training data
+#Also we remove the bias element from the linear train x
+
+linear_train_x = train_x
+linear_train_y = train_y[:,0]
+linear_test_x = test_x
+linear_test_y = test_y[:,0]
+
+max_indices = heapq.nlargest(4, range(len(pcc)), abs(pcc).take)
+reduced_feature_x = linear_train_x[:,max_indices]
+reduced_feature_x = np.insert(reduced_feature_x,0,np.ones(n),axis = 1)
+reduced_test_x = linear_test_x[:,max_indices]
+reduced_test_x = np.insert(reduced_test_x,0,np.ones(test_n),axis = 1)
+
+print '\nFeature Selection:Scheme (a) results:'
+print 'Attribute\tCorrelation'
+for index in max_indices:
+    print str(index+1) + '\t' + str(pcc[index])
+
+weights = get_linear_regression_weights(reduced_feature_x,linear_train_y)
+loss = mean_squared_loss(reduced_feature_x,linear_train_y,n,weights)
+print 'MSE for training data: ' + str(loss)
+loss = mean_squared_loss(reduced_test_x,linear_test_y,test_n,weights)
+print 'MSE for test Data: ' + str(loss)
+
+
+#3.3 b)
+leftoverFeatures = range(0,13)
+addedFeatures = []
+residual = linear_train_y
+#print getMaxCorrelatedFeature(train_x,listFeatures,linear_train_y)
+for i in range(0,4):
+    maxFeatureIndex = getMaxCorrelatedFeature(train_x,leftoverFeatures,residual)
+    print maxFeatureIndex
+    addedFeatures.append(maxFeatureIndex)
+    leftoverFeatures.remove(maxFeatureIndex)
+    reduced_feature_x = train_x[:,addedFeatures]
+    reduced_feature_x = np.insert(reduced_feature_x,0,np.ones(n),axis = 1)
+    weights = get_linear_regression_weights(reduced_feature_x,linear_train_y)
+    residual  = linear_train_y - np.dot(reduced_feature_x,weights)

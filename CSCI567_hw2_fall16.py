@@ -153,7 +153,7 @@ print 'MSE for test Data: ' + str(loss)
 
 #Ridge Regression
 
-print '\n Ridge Regression Calculations:'
+print '\nRidge Regression Calculations:'
 regLambdas = [0.01,0.1,1.0]
 for regLambda in regLambdas:
     print 'For lambda = ' + str(regLambda) + ' :'
@@ -164,7 +164,7 @@ for regLambda in regLambdas:
     print 'MSE for test data: ' + str(loss)
 
 #Cross validation for Ridge Regression
-print '\nCross Validation results '
+print '\nCross Validation results :'
 regLambdas = [0.0001,0.001,0.01,0.1,1,10]
 lossArray = np.array(np.zeros(len(regLambdas)))
 k =int(n/10) #No. of samples in a single fold
@@ -236,13 +236,54 @@ print 'MSE for test Data: ' + str(loss)
 leftoverFeatures = range(0,13)
 addedFeatures = []
 residual = linear_train_y
-#print getMaxCorrelatedFeature(train_x,listFeatures,linear_train_y)
+
+print '\nFeature Selection:Scheme (b) results:'
+print 'Attribute Selected:'
 for i in range(0,4):
     maxFeatureIndex = getMaxCorrelatedFeature(train_x,leftoverFeatures,residual)
-    print maxFeatureIndex
+    print (maxFeatureIndex+1)
     addedFeatures.append(maxFeatureIndex)
     leftoverFeatures.remove(maxFeatureIndex)
     reduced_feature_x = train_x[:,addedFeatures]
     reduced_feature_x = np.insert(reduced_feature_x,0,np.ones(n),axis = 1)
     weights = get_linear_regression_weights(reduced_feature_x,linear_train_y)
-    residual  = linear_train_y - np.dot(reduced_feature_x,weights)
+    residual = linear_train_y - np.dot(reduced_feature_x,weights)
+
+loss = mean_squared_loss(reduced_feature_x,linear_train_y,n,weights)
+print 'MSE for training data: ' + str(loss)
+reduced_test_x = test_x[:,addedFeatures]
+reduced_test_x  = np.insert(reduced_test_x,0,np.ones(test_n),axis = 1)
+loss = mean_squared_loss(reduced_test_x,linear_test_y,test_n,weights)
+print 'MSE for test Data: ' + str(loss)
+
+
+#Selection with brute force search
+
+print '\nFeature Selection brute force results:'
+print 'Attribute Selected:'
+dict = {}
+for i in range(0,np.size(train_x,1)):
+    for j in range(i+1,np.size(train_x,1)):
+        for k in range(j+1,np.size(train_x,1)):
+            for l in range(k+1,np.size(train_x,1)):
+                reduced_feature_x = train_x[:,[i,j,k,l]]
+                reduced_feature_x = np.insert(reduced_feature_x,0,np.ones(n),axis = 1)
+                weights = get_linear_regression_weights(reduced_feature_x,linear_train_y)
+                loss = mean_squared_loss(reduced_feature_x,linear_train_y,n,weights)
+                dict[i,j,k,l] = loss
+
+addedFeatures = min(dict.iteritems(), key=operator.itemgetter(1))[0]
+
+for i in addedFeatures:
+    print i+1
+
+reduced_feature_x = train_x[:,addedFeatures]
+reduced_feature_x = np.insert(reduced_feature_x,0,np.ones(n),axis = 1)
+weights = get_linear_regression_weights(reduced_feature_x,linear_train_y)
+loss = mean_squared_loss(reduced_feature_x,linear_train_y,n,weights)
+print 'MSE for training data: ' + str(loss)
+reduced_test_x = test_x[:,addedFeatures]
+reduced_test_x  = np.insert(reduced_test_x,0,np.ones(test_n),axis = 1)
+loss = mean_squared_loss(reduced_test_x,linear_test_y,test_n,weights)
+print 'MSE for test Data: ' + str(loss)
+

@@ -203,6 +203,7 @@ loss = mean_squared_loss(linear_test_x,linear_test_y,test_n,weights)
 print 'MSE for test data with lambda='+ str(regLambdas[index])+ ' is : ' + str(loss)
 
 
+
 #--------------------------------------3.3 Feature Selection ------------------------------------------
 
 #3.3 a)
@@ -287,3 +288,43 @@ reduced_test_x  = np.insert(reduced_test_x,0,np.ones(test_n),axis = 1)
 loss = mean_squared_loss(reduced_test_x,linear_test_y,test_n,weights)
 print 'MSE for test Data: ' + str(loss)
 
+
+#-----------------------------------3.4 Polynomial feature expansion ------------------------------
+
+poly_train_x = np.array(np.zeros((np.size(train_x,0),91)))
+index = 0
+for i in range(0,13):
+    for j in range(i,13):
+        poly_train_x[:,index] = train_x[:,i]*train_x[:,j]
+        index = index + 1
+
+for i in range(0,np.size(poly_train_x,1)): #Normalize
+    xi = poly_train_x[:,i]
+    mean = np.mean(xi)
+    std = np.std(xi)
+    print i,mean,std
+    poly_train_x[:,i] = (xi - mean)*1.0/std;
+
+poly_test_x = np.array(np.zeros((np.size(test_x,0),91)))
+index  = 0
+for i in range(0,13):
+    for j in range(i,13):
+        poly_test_x[:,index] = np.multiply(test_x[:,i],test_x[:,j])
+        index = index + 1
+
+for i in range(0,np.size(poly_test_x,1)): #Normalize
+    xi = poly_test_x[:,i]
+    mean = np.mean(xi)
+    std = np.std(xi)
+    poly_test_x[:,i] = (xi - mean)*1.0/std;
+
+poly_train_x = np.hstack([train_x,poly_train_x])
+poly_train_x = np.insert(poly_train_x,0,np.ones(n),axis = 1)
+weights = get_linear_regression_weights(poly_train_x,linear_train_y)
+loss = mean_squared_loss(poly_train_x,linear_train_y,n,weights)
+print 'MSE for training data: ' + str(loss)
+
+poly_test_x = np.hstack([test_x,poly_test_x])
+poly_test_x  = np.insert(poly_test_x,0,np.ones(test_n),axis = 1)
+loss = mean_squared_loss(poly_test_x,linear_test_y,test_n,weights)
+print 'MSE for test Data: ' + str(loss)

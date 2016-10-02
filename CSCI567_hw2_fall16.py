@@ -37,7 +37,7 @@ def mean_squared_loss(x,y,n,w):
 # This function calculates the analytical weights for linear regression
 def get_linear_regression_weights(x,y):
     a1 = x.transpose().dot(x)
-    a2 = np.linalg.inv(a1)
+    a2 = np.linalg.pinv(a1)
     a3 = a2.dot(x.transpose())
     a4 = a3.dot(y)
 
@@ -47,7 +47,7 @@ def get_linear_regression_weights(x,y):
 def get_ridge_regression_weights(x,y,regLambda):
     a0 = regLambda * np.eye(np.size(x,1))
     a1 = x.transpose().dot(x) + a0
-    a2 = np.linalg.inv(a1)
+    a2 = np.linalg.pinv(a1)
     a3 = a2.dot(x.transpose())
     a4 = a3.dot(y)
 
@@ -123,15 +123,10 @@ for i in range(0,np.size(train_x,1)):
     mean = np.mean(xi)
     std = np.std(xi)
     train_x[:,i] = (xi - mean)*1.0/std;
-
-#Normalizing Test data..
-for i in range(0,np.size(test_x,1)):
     xi = test_x[:,i]
-    mean = np.mean(xi)
-    std = np.std(xi)
     test_x[:,i] = (xi - mean)*1.0/std;
 
-
+print('\n------------------------------------------------------------------------------------')
 
 #---------------------------------------------3.2 Linear Regression  ----------------------------------------------------
 
@@ -202,7 +197,7 @@ weights = get_ridge_regression_weights(linear_train_x,linear_train_y,regLambdas[
 loss = mean_squared_loss(linear_test_x,linear_test_y,test_n,weights)
 print 'MSE for test data with lambda='+ str(regLambdas[index])+ ' is : ' + str(loss)
 
-
+print('\n------------------------------------------------------------------------------------')
 
 #--------------------------------------3.3 Feature Selection ------------------------------------------
 
@@ -288,35 +283,34 @@ reduced_test_x  = np.insert(reduced_test_x,0,np.ones(test_n),axis = 1)
 loss = mean_squared_loss(reduced_test_x,linear_test_y,test_n,weights)
 print 'MSE for test Data: ' + str(loss)
 
-
+print('\n------------------------------------------------------------------------------------')
 #-----------------------------------3.4 Polynomial feature expansion ------------------------------
 
+print '\nResults for polynomial feature selection:'
+
 poly_train_x = np.array(np.zeros((np.size(train_x,0),91)))
+poly_test_x = np.array(np.zeros((np.size(test_x,0),91)))
+
 index = 0
 for i in range(0,13):
     for j in range(i,13):
         poly_train_x[:,index] = train_x[:,i]*train_x[:,j]
         index = index + 1
 
-for i in range(0,np.size(poly_train_x,1)): #Normalize
-    xi = poly_train_x[:,i]
-    mean = np.mean(xi)
-    std = np.std(xi)
-    print i,mean,std
-    poly_train_x[:,i] = (xi - mean)*1.0/std;
-
-poly_test_x = np.array(np.zeros((np.size(test_x,0),91)))
 index  = 0
 for i in range(0,13):
     for j in range(i,13):
         poly_test_x[:,index] = np.multiply(test_x[:,i],test_x[:,j])
         index = index + 1
 
-for i in range(0,np.size(poly_test_x,1)): #Normalize
-    xi = poly_test_x[:,i]
+for i in range(0,np.size(poly_train_x,1)): #Normalize
+    xi = poly_train_x[:,i]
     mean = np.mean(xi)
     std = np.std(xi)
+    poly_train_x[:,i] = (xi - mean)*1.0/std;
+    xi = poly_test_x[:,i]
     poly_test_x[:,i] = (xi - mean)*1.0/std;
+
 
 poly_train_x = np.hstack([train_x,poly_train_x])
 poly_train_x = np.insert(poly_train_x,0,np.ones(n),axis = 1)
@@ -328,3 +322,5 @@ poly_test_x = np.hstack([test_x,poly_test_x])
 poly_test_x  = np.insert(poly_test_x,0,np.ones(test_n),axis = 1)
 loss = mean_squared_loss(poly_test_x,linear_test_y,test_n,weights)
 print 'MSE for test Data: ' + str(loss)
+
+print('\n------------------------------------------------------------------------------------')

@@ -90,13 +90,14 @@ for i in range(0,len(boston['data'])):
 #Data Analysis
 
 #Histogram
-#for i in range(0,np.size(train_x,1)):
-#    fig = plt.figure()
-#    plt.hist(train_x[:,i],bins=10)
-#    plt.title("Feature "+str(i+1))
-#    plt.xlabel("Value")
-#    plt.ylabel("Frequency")
-#    fig.savefig('histogram_feature_'+str(i+1)+'.png')
+for i in range(0,np.size(train_x,1)):
+    plt.subplot(4,4,i+1)
+    plt.tight_layout()
+    plt.hist(train_x[:,i],bins=10)
+    plt.title("Feature "+str(i+1))
+    plt.xlabel("Value")
+    plt.ylabel("Frequency")
+plt.show()
 
 
 #Pearson Correlation Coefficient
@@ -192,7 +193,7 @@ for regLambda in regLambdas:
     print 'Lambda = ' + str(regLambda) + ', Average MSE over 10 folds = ' + str(loss)
 
 index = np.argmin(lossArray)  #index of the lambda with min average MSE
-
+print 'The best choice of lambda among all lambdas is lambda=' + str(regLambdas[index])
 weights = get_ridge_regression_weights(linear_train_x,linear_train_y,regLambdas[index])
 loss = mean_squared_loss(linear_test_x,linear_test_y,test_n,weights)
 print 'MSE for test data with lambda='+ str(regLambdas[index])+ ' is : ' + str(loss)
